@@ -1,6 +1,7 @@
 data/
 cmake*/
 output/
+build/
 *.cbp
 *.cmake
 *.a
