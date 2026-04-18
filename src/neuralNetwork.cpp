@@ -1029,8 +1029,8 @@ void neuralNetwork::roundLayer(layer &circuit, i64 &layer_id, float scale,bool* 
 
 void neuralNetwork::multi_head_matrix_QK(layer &circuit, i64 &layer_id)
 {
-    const int HEAD=12;
-    const int HSIZE=64;
+    const int HEAD=headnum;
+    const int HSIZE=headdim;
     int output_size=HEAD*len*(len+1)/2;
     initLayer(circuit, output_size, layerType::MHA_QK);
     circuit.need_phase2 = true;
@@ -1072,8 +1072,8 @@ void neuralNetwork::compute_e_table()
 
 void neuralNetwork::softmax_layer_1(layer &circuit, i64 &layer_id,float SQ,float SK,float Sv, float Sy)
 {
-    const int HEAD=12;
-    const int HSIZE=64;
+    const int HEAD=headnum;
+    const int HSIZE=headdim;
     int orgsize=val[0].size();
     val[0].resize(orgsize+10+HEAD*2*len+4*HEAD*len*(len+1)/2+HEAD*len*HSIZE+len*channel_in);//sumE,pmax,delta1,delta2,t,E,delta3,Y
     for(int i=orgsize;i<val[0].size();i++)
@@ -1199,8 +1199,8 @@ void neuralNetwork::softmax_layer_1(layer &circuit, i64 &layer_id,float SQ,float
 
 void neuralNetwork::softmax_layer_2(layer &circuit, i64 &layer_id,float SQ,float SK,float Sv, float Sy)
 {
-    const int HEAD=12;
-    const int HSIZE=64;
+    const int HEAD=headnum;
+    const int HSIZE=headdim;
     int orgsize=softmax_aux_start;
     
     int output_size=2*HEAD*len*HSIZE+HEAD*len*(len+1)/2; //delta3_term1, delta3_term2, delta2_check 
@@ -1276,8 +1276,8 @@ void neuralNetwork::softmax_layer_2(layer &circuit, i64 &layer_id,float SQ,float
 }
 void neuralNetwork::softmax_layer_3(layer &circuit, i64 &layer_id,float SQ,float SK,float Sv, float Sy)
 {
-    const int HEAD=12;
-    const int HSIZE=64;
+    const int HEAD=headnum;
+    const int HSIZE=headdim;
     int orgsize=softmax_aux_start;
     
     int output_size=HEAD*len*HSIZE; //delta3_check
@@ -1372,21 +1372,22 @@ void neuralNetwork::calcInputLayer(layer &circuit)
 
     double num, mx = -10000, mn = 10000;
     vector<double> input_dat;
-    int hidden=768;
+    int hidden = attn_dim;
+    int row_stride = 1 << ceilPow2BitLength(attn_dim);
     for (i64 i=0;i<len;i++)
     {
         for(i64 j=0;j<hidden;j++)
         {
-            in >> num; 
+            in >> num;
             input_dat.push_back(num);
             mx = max(mx, num);
             mn = min(mn, num);
         }
     }
-    pair<int,int> pm=search(0.01);  
+    pair<int,int> pm=search(0.01);
     input_e=pm.first;
     input_c=pm.second;
-    
+
     double sc=input_c*pow(2,input_e);
     int k=0;
     for (i64 i=0;i<len;i++)
@@ -1394,13 +1395,13 @@ void neuralNetwork::calcInputLayer(layer &circuit)
         for(i64 j=0;j<hidden;j++)
         {
             ll s=input_dat[k++]/sc;
-            val[0][i*1024+j] = F(s);
+            val[0][i*row_stride+j] = F(s);
         }
-        for(i64 j=hidden;j<1024;j++)
-            val[0][i*1024+j] =0;
+        for(i64 j=hidden;j<row_stride;j++)
+            val[0][i*row_stride+j] =0;
     }
 
-    val_0=val[0].begin()+len*1024;
+    val_0=val[0].begin()+len*row_stride;
     for (; val_0 < val[0].begin() + circuit.size; ++val_0) 
         val_0 -> clear();
 }

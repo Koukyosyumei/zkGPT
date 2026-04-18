@@ -8,7 +8,7 @@
 class LLM: public neuralNetwork {
 
 public:
-    explicit LLM(int depth, int headnum=0, int headdim=0, int attn_dim=0, int linear_dim=0);
+    explicit LLM(int depth, int headnum=0, int headdim=0, int attn_dim=0, int linear_dim=0, int seq_len=30);
 };
 
 #endif 

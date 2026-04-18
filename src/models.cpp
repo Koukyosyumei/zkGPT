@@ -11,10 +11,10 @@
 
 
 
-LLM::LLM(int depth, int headnum, int headdim, int attn_dim, int linear_dim):
+LLM::LLM(int depth, int headnum, int headdim, int attn_dim, int linear_dim, int seq_len):
     neuralNetwork(0,0,0,0, "./data/vgg11/vgg11.cifar.relu-1-images-weights-qint8.csv", "", "", true, headnum, headdim, attn_dim, linear_dim)
 {
-    len=30;
+    len=seq_len;
     pic_parallel=1;
     conv_section.clear();
     positive_check=0;
