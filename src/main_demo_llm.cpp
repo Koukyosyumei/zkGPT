@@ -9,6 +9,7 @@
 #include "models.hpp"
 #include "global_var.hpp"
 #include <iostream>
+#include <memory>
 #include <string>
 #include <map>
 
@@ -105,19 +106,20 @@ int main(int argc, char **argv)
          << " seq_len=" << cfg.seq_len
          << " threads=" << threads << "\n";
 
-    // range prover
-    range_prover range_prover(cfg.n_layers, cfg.n_heads, cfg.head_dim,
-                              cfg.attn_dim, cfg.linear_dim, cfg.seq_len,
-                              threads, 1);
-    range_prover.init();
-    range_prover.build();
-    double range_prover_time = range_prover.prove();
+    // range prover (heap-allocated: range_prover::g[4096] and neuralNetwork::table[655360] are too large for stack)
+    auto rp = unique_ptr<range_prover>(new range_prover(
+        cfg.n_layers, cfg.n_heads, cfg.head_dim,
+        cfg.attn_dim, cfg.linear_dim, cfg.seq_len,
+        threads, 1));
+    rp->init();
+    rp->build();
+    double range_prover_time = rp->prove();
 
-    // gkr
-    prover p;
-    LLM nn(cfg.n_layers, cfg.n_heads, cfg.head_dim, cfg.attn_dim, cfg.linear_dim, cfg.seq_len);
-    nn.create(p, 1);
-    verifier v(&p, p.C);
+    // gkr (heap-allocated for same reason)
+    auto p = unique_ptr<prover>(new prover());
+    auto nn = unique_ptr<LLM>(new LLM(cfg.n_layers, cfg.n_heads, cfg.head_dim, cfg.attn_dim, cfg.linear_dim, cfg.seq_len));
+    nn->create(*p, 1);
+    verifier v(p.get(), p->C);
     v.range_prove(range_prover_time);
     v.prove(threads);
 }

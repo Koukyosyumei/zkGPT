@@ -47,6 +47,11 @@ public:
     void sumcheck_lasso_Finalize(const F &previous_random, F &claim_1);
 
     void sumcheckLassoInit(const vector<F> &s_u, const vector<F> &s_v,const vector<vector<F>>& r_uu, const vector<vector<F>>& r_vv);
+    // Called by verifier to propagate FCONN challenges into prover's r_u/r_v
+    void setFCONNRandomness(int layer_id, const vector<F>& ru, const vector<F>& rv) {
+        r_u[layer_id] = ru;
+        r_v[layer_id] = rv;
+    }
     quadratic_poly sumcheckLassoUpdate(const F &previous_random);
     quadratic_poly sumcheckUpdateEach_Lasso(const F &previous_random, bool idx) ;
     void commitInput(const vector<G1> &gens,int thread_n=1);

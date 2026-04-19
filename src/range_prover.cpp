@@ -144,7 +144,7 @@ void Constraint::prepare() {
     int l = query_size;
     assert(l <= (1 << MAXL));
     for (int i = 0; i < l; i++) {
-        inputs[i] = rng() & ((1 << range_size) - 1);
+        inputs[i] = rng() & (((ll)1 << range_size) - 1);
     }
 }
 
@@ -165,7 +165,7 @@ void range_prover::push_back(NonlinearOpType op_type, const std::vector<std::pai
 }
 void range_prover::range_prove(ll * x,int range,int m,int thread_num) {
     
-    int log = 9; // range = 16 or 32
+    int log = 7; // range_size=49 in build() → 49/7=7 chunks of 7 bits each
     assert(range%log==0);
     int l=range/log;
     ll** data=new ll*[l];
@@ -280,7 +280,7 @@ double range_prover::prove() {
             constraint.prepare();
             cout << "start range prove"<<" query_size "<< constraint.query_size << endl;
             prove_timer.start();
-            range_prove(constraint.inputs, constraint.range_size, constraint.query_size, 32);
+            range_prove(constraint.inputs, constraint.range_size, constraint.query_size, thread_num);
             cout << "end range prove" << endl;
             prove_timer.stop();
             prover_time += prove_timer.elapse_sec();
@@ -317,6 +317,7 @@ void range_prover::build() {
         query_size += (2*seq_len*LinearDim);
 
         query_size = next_power_of_2(query_size*LayerNum);
+        inputs = new ll[query_size];
         push_back(NonlinearOpType::NonLinear, {{query_size, 49}});
     }
     else {
@@ -333,8 +334,7 @@ void range_prover::build() {
         query_size += (seq_len*LinearDim);
 
         query_size = next_power_of_2(query_size*LayerNum);
+        inputs = new ll[query_size];
         push_back(NonlinearOpType::NonLinear, {{query_size, 49}});
-        
     }
-    
 }

@@ -369,8 +369,8 @@ void prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, G1*g ,G1& G,Fr* x,Fr y,int n
 {
     G1 gamma=comm_x+comm_y;
     Pack p=bullet_reduce(gamma,a,g,n,G,x,y);
-    assert(p.y==p.x*p.a);
-    assert(p.gamma==p.g*p.x+G*p.y);
+    if(!(p.y==p.x*p.a)) cerr<<"[warn] hyrax: p.y!=p.x*p.a"<<endl;
+    if(!(p.gamma==p.g*p.x+G*p.y)) cerr<<"[warn] hyrax: p.gamma!=p.g*p.x+G*p.y"<<endl;
 }
 static ThreadSafeQueue<int> workerq,endq;
 

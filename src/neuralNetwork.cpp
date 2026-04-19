@@ -309,12 +309,12 @@ void neuralNetwork::create(prover &pr, bool merge)
     G1 base=gen_gi(pr.gens.data(),n_sqrt);
     pr.gens.push_back(base);
     T.start();
-    pr.commitInput(pr.gens,32);  //commit weight
+    pr.commitInput(pr.gens, pic_parallel);  //commit weight
     T.stop();
     pr.proof_size+= 1<<(pr.cc.l/2);
     cout<<"Model weight commit time: "<<T.elapse_sec()<<"s"<<endl;
     cout<<"Start initiating circuit"<<endl;
-    for (int i = 0; i < full_conn.size(); ++i) 
+    for (int i = 0; i < (int)full_conn.size(); ++i)
     {
         auto &fc = full_conn[i];
         refreshFCParam(fc);
@@ -344,7 +344,6 @@ void neuralNetwork::create(prover &pr, bool merge)
         float c_A,e_A,c_B=1,e_B=-10,c_C=7,e_C=-8;
         c_A=input_c;
         e_A=input_e;
-        
         roundLayer(pr.C.circuit[layer_id], layer_id,(float)c_A*c_B/c_C*pow(2,e_A+e_B-e_C));
         if(i%4==0)
         {
@@ -360,18 +359,16 @@ void neuralNetwork::create(prover &pr, bool merge)
             gelu_checker_layer3(pr.C.circuit[layer_id], layer_id,pr.fc_real_col[i],-8,48, -8,217,-8, 252,-8, 615,ex,cx,ey,cy);
         }
     }
-   
+
     if(merge)
-    {
         merge_layer(pr,layer_id);
-    }
-    
+
     total_in_size += total_max_in_size + total_ave_in_size + total_relu_in_size;
     initLayer(pr.C.circuit[0], total_in_size, layerType::INPUT);
     assert(total_in_size == pr.val[0].size());
 
     pr.C.initSubset();
-    
+
     int cnt=0;
     for(int i=0;i<pr.C.size;i++)
         cnt+=pr.val[i].size();

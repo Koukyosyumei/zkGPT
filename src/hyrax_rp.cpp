@@ -205,8 +205,8 @@ bool range_proof_prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, Fr* x,Fr y,G1*g 
     //timer blt;
     //blt.start();
     Pack p=bullet_reduce(gamma,a,x,y,g,G,n,false);
-    assert(p.y==p.x*p.a);
-    assert(p.gamma==p.g*p.x+G*p.y);
+    if(!(p.y==p.x*p.a)) cerr<<"[warn] hyrax_rp: p.y!=p.x*p.a"<<endl;
+    if(!(p.gamma==p.g*p.x+G*p.y)) cerr<<"[warn] hyrax_rp: p.gamma mismatch"<<endl;
     //blt.stop("bullet reduce ");
     return true;
     

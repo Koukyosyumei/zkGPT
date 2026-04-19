@@ -20,7 +20,13 @@ void prover::init()
     proof_size = 0;
     r_u.resize(C.size + 1);
     r_v.resize(C.size + 1);
-    const int SIZE=28;
+    int SIZE = 1;
+    for (int i = 0; i < C.size; ++i) {
+        i8 mbu = C.circuit[i].max_bl_u, mbv = C.circuit[i].max_bl_v, bl = C.circuit[i].bit_length;
+        if (mbu > 0) SIZE = max(SIZE, (int)mbu);
+        if (mbv > 0) SIZE = max(SIZE, (int)mbv);
+        if (bl > 0)  SIZE = max(SIZE, (int)bl);
+    }
     V_mult[0].resize(1<<SIZE);
     V_mult[1].resize(1<<SIZE);
     mult_array[0].resize(1<<SIZE);
@@ -352,9 +358,9 @@ void prover::sumcheckInitPhase2()
     prove_timer.stop();
 }
 
-void prover::sumcheckLassoInit(const vector<F> &s_u, const vector<F> &s_v,const vector<vector<F>>& r_uu, const vector<vector<F>>& r_vv) 
+void prover::sumcheckLassoInit(const vector<F> &s_u, const vector<F> &s_v,const vector<vector<F>>& r_uu, const vector<vector<F>>& r_vv)
 {
-    
+    prove_timer.start();
     sumcheck_id = 0;
     total[1] = (1ULL << C.circuit[sumcheck_id].bit_length);
     total_size[1] = C.circuit[sumcheck_id].size;
@@ -367,12 +373,11 @@ void prover::sumcheckLassoInit(const vector<F> &s_u, const vector<F> &s_v,const 
     for (int i = sumcheck_id + 1; i < C.size; ++i)
         max_bl = max(max_bl, max(C.circuit[i].bit_length_u[0], C.circuit[i].bit_length_v[0]));
     beta_g.resize(1ULL << max_bl);
-    for (u8 i = sumcheck_id + 1; i < C.size; ++i) 
+    for (u8 i = sumcheck_id + 1; i < C.size; ++i)
     {
         i8 bit_length_i = C.circuit[i].bit_length_u[0];
         u32 size_i = C.circuit[i].size_u[0];
-        //timer a,b;
-        if (~bit_length_i) 
+        if (~bit_length_i)
         {
             r_u[i].resize(C.circuit[i].max_bl_u);
             for(int j=0;j<C.circuit[i].max_bl_u;j++)

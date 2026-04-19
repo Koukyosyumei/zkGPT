@@ -55,7 +55,7 @@ public:
     vector<OP> ops;
     G1 g[1<<(MAXL/2)],GG;
     Fr r[MAXL];
-    ll * inputs = new ll[1<<MAXL];
+    ll * inputs = nullptr;  // allocated in build() based on actual query_size
     void init();
     void push_back(NonlinearOpType op_type, const std::vector<std::pair<int, int>>& constraint_params);
     timer prove_timer;

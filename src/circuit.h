@@ -76,8 +76,7 @@ public:
 	    max_bl_u = std::max(bit_length_u[0], bit_length_u[1]);
 	    max_bl_v = 0;
 	    if (!need_phase2) return;
-
-        max_bl_v = std::max(bit_length_v[0], bit_length_v[1]);
+	    max_bl_v = std::max(bit_length_v[0], bit_length_v[1]);
 	}
 };
 

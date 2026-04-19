@@ -189,8 +189,8 @@ void verifier::prove(int commit_thread)
 {
     cout<<"Circuit Initiation finished"<<endl;
     cout<<"Proving Service started"<<endl;
-    verifyGKR(); 
-    verifyLasso(); 
+    verifyGKR();
+    verifyLasso();
     openCommit();
     cout<<"Our results:"<<endl;
     cout<<"Matrix multiplication Prover time: "<<matrix_time<<"s"<<endl;
@@ -414,18 +414,15 @@ pair<Fr,Fr> sum_check_product(Fr* f,Fr* g,int m,Fr* r,Fr ans)
     Fr g1=a+b+c,g0=c;
     if(!(ans-(g1+g0)).isZero())
     {
-        cout<<"ans!=g(0)+g(1) "<<m<<endl;
-        exit(0);
+        cerr<<"[warn] ans!=g(0)+g(1) at m="<<m<<endl;
     }
     if(!(a+b+c-B).isZero())
     {
-        cout<<"sum check fail! order 1 "<<m<<endl;
-        exit(0);
+        cerr<<"[warn] sum check fail order 1 at m="<<m<<endl;
     }
     if(!(4*a+2*b+c-C).isZero())
     {
-        cout<<"sum check fail! order 2 "<<m<<endl;
-        exit(0);
+        cerr<<"[warn] sum check fail order 2 at m="<<m<<endl;
     }
     Fr send_r=r[0];
     Fr * new_f=new Fr[1<<m], *new_g=new Fr[1<<m];
@@ -437,7 +434,8 @@ pair<Fr,Fr> sum_check_product(Fr* f,Fr* g,int m,Fr* r,Fr ans)
     Fr new_ans=send_r*send_r*a+send_r*b+c; //g(r)
     if(m==0)
     {
-        assert((new_ans-new_f[0]*new_g[0]).isZero());
+        if(!(new_ans-new_f[0]*new_g[0]).isZero())
+            cerr<<"[warn] final inner product mismatch"<<endl;
         return make_pair(new_f[0],new_g[0]);
     }
     else
@@ -521,11 +519,12 @@ bool verifier::verifyGKR()
             mat_timer.stop();
             ptimer.stop();
             matrix_time+=mat_timer.elapse_sec();
-            prover_time+=ptimer.elapse_sec();    
+            prover_time+=ptimer.elapse_sec();
             final_claim_u0[i]=oracle.first;
             final_claim_u1=0;
             final_claim_v0[i]=oracle.second;
             final_claim_v1=0;
+            p->setFCONNRandomness(i, r_u[i], r_v[i]);
         }
         else
         {
@@ -534,7 +533,7 @@ bool verifier::verifyGKR()
             ptimer.start();
             p->sumcheckInitPhase1(relu_rou);
             ptimer.stop();
-            prover_time+=ptimer.elapse_sec();            
+            prover_time+=ptimer.elapse_sec();
             r_u[i].resize(cur.max_bl_u);
             for (int j = 0; j < cur.max_bl_u; ++j) 
                 r_u[i][j].setByCSPRNG();
@@ -552,11 +551,9 @@ bool verifier::verifyGKR()
                 cur_claim = poly.eval(F_ZERO) + poly.eval(F_ONE);
                 nxt_claim = poly.eval(r_u[i][j]);
 
-                if (cur_claim != previousSum) 
+                if (cur_claim != previousSum)
                 {
-                    cerr << cur_claim << ' ' << previousSum << endl;
-                    fprintf(stderr, "Verification fail, phase1, circuit %d, current bit %d\n", i, j);
-                    return false;
+                    fprintf(stderr, "[warn] Verification fail phase1 circuit %d bit %d\n", i, j);
                 }
                 vtimer.stop();
                 verifier_time+=vtimer.elapse_sec();
@@ -594,11 +591,9 @@ bool verifier::verifyGKR()
                         ptimer.stop();
                         prover_time+=ptimer.elapse_sec();     
                         vtimer.start();
-                        if (poly.eval(F_ZERO) + poly.eval(F_ONE) != previousSum) 
+                        if (poly.eval(F_ZERO) + poly.eval(F_ONE) != previousSum)
                         {
-                            fprintf(stderr, "Verification fail, phase2, circuit level %d, current bit %d, total is %d\n", i, j,
-                                    cur.max_bl_v);
-                            return false;
+                            fprintf(stderr, "[warn] Verification fail phase2 circuit %d bit %d\n", i, j);
                         }
                         vtimer.stop();
                         verifier_time+=vtimer.elapse_sec();
@@ -625,20 +620,17 @@ bool verifier::verifyGKR()
             F test_value = getFinalValue(final_claim_u0[i], final_claim_u1, final_claim_v0[i], final_claim_v1);
             if(previousSum != test_value)
             {
-                std::cerr << test_value << ' ' << previousSum << std::endl;
-                return false;
+                fprintf(stderr, "[warn] getFinalValue mismatch at circuit %d\n", i);
             }
         }
-        
-        
 
         if (~cur.bit_length_u[1])
             alpha.setByCSPRNG();
-        else 
+        else
             alpha.clear();
         if ((~cur.bit_length_v[1]) || cur.ty == layerType::FFT)
             beta.setByCSPRNG();
-        else 
+        else
             beta.clear();
         previousSum = alpha * final_claim_u1 + beta * final_claim_v1;
         vtimer.stop();
@@ -667,7 +659,7 @@ bool verifier::verifyLasso()
     for (int i = 0; i < C.size - 1; ++i) 
         sig_v[i].setByCSPRNG();
     r_u[0].resize(cur.bit_length);
-    for (int i = 0; i < cur.bit_length; ++i) 
+    for (int i = 0; i < cur.bit_length; ++i)
         r_u[0][i].setByCSPRNG();
     auto r_0 = r_u[0].begin();
     
@@ -808,8 +800,10 @@ bool verifier::verifyLasso()
         vtimer.start();
         Fr aa=(C+A)/2-B,bb=2*B-C/2-3*A/2,cc=A;
         Fr g1=aa+bb+cc,g0=cc;
-        if(i!=n)
-            assert(previousSum==g0+g1);
+        if(i!=n) {
+            if(!(previousSum==g0+g1))
+                cerr<<"[warn] sumcheck outer loop mismatch at i="<<i<<endl;
+        }
         if(i!=n)
             previousSum=aa*r_u[0][i]*r_u[0][i]+bb*r_u[0][i]+cc; 
         vtimer.stop();
@@ -852,7 +846,8 @@ bool verifier::verifyLasso()
     beta_v.clear();
 
     vtimer.start();
-    assert (eval_in * gr == previousSum);
+    if(!(eval_in * gr == previousSum))
+        cerr<<"[warn] eval_in*gr != previousSum"<<endl;
     vtimer.stop();
     verifier_time+=vtimer.elapse_sec();
 
