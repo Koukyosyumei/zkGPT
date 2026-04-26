@@ -1,5 +1,6 @@
 #undef NDEBUG
 #include "hyrax_rp.hpp"
+#include "global_var.hpp"
 #include <cmath>
 #include <iostream>
 
@@ -152,10 +153,15 @@ Pack bullet_reduce(G1 gamma, Fr*a,Fr* x,Fr y,G1*g,G1& G,int n,bool need_free) //
 {
     if(n==1)
     {
+        // Bulletproofs base case: prover sends final scalars (a, x).
+        g_proof_size += 2 * F_BYTE_SIZE;
         Pack p(gamma,a[0],g[0],x[0],y);
         return p;
     }
-    
+
+    // Bulletproofs round: prover sends cross-term commitments (gamma_minus1, gamma_1).
+    g_proof_size += 2 * G_BYTE_SIZE;
+
     //step2  prover fold
     G1 gamma_minus1,gamma_1;
     Fr x1a2=0,x2a1=0;
@@ -237,6 +243,7 @@ G1* range_proof_prover_commit(ll* w, G1* g, int l,int thread_n) //compute Tk, in
     //w has 2^l length
     int halfl=l/2;
     int rownum=(1<<halfl),colnum=(1<<(l-halfl));
+    g_proof_size += (u64)rownum * G_BYTE_SIZE;
     G1 *Tk=new G1[rownum];
     //timer t;
     //t.start();
@@ -285,12 +292,13 @@ void fr_commit_worker(G1*& Tk,G1*& g, ll*& w,Fr* f,int m,int rownum,int colnum)
             endq.Push(idx);
     }
 }
-G1* range_proof_prover_commit_fr(ll* w, Fr* f,int m,G1* g, int l,int thread_n) 
+G1* range_proof_prover_commit_fr(ll* w, Fr* f,int m,G1* g, int l,int thread_n)
 {
     //cerr<<"hyrax commit thread num: "<<thread_n<<endl;
     //w has 2^l length
     int halfl=l/2;
     int rownum=(1<<halfl),colnum=(1<<(l-halfl));
+    g_proof_size += (u64)rownum * G_BYTE_SIZE;
     G1 *Tk=new G1[rownum];
   //  timer t;
   //  t.start();
@@ -328,12 +336,13 @@ void fr_commit_worker_general(G1*& Tk,G1*& g, Fr*& w,int rownum,int colnum)
             endq.Push(idx);
     }
 }
-G1* range_proof_prover_commit_fr_general(Fr* w, G1* g, int l,int thread_n) 
+G1* range_proof_prover_commit_fr_general(Fr* w, G1* g, int l,int thread_n)
 {
     //cerr<<"hyrax commit thread num: "<<thread_n<<endl;
     //w has 2^l length
     int halfl=l/2;
     int rownum=(1<<halfl),colnum=(1<<(l-halfl));
+    g_proof_size += (u64)rownum * G_BYTE_SIZE;
     G1 *Tk=new G1[rownum];
   //  timer t;
   //  t.start();

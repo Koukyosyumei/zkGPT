@@ -44,8 +44,14 @@ typedef G1 G;
 #define F_ONE (Fr::one())
 #define F_ZERO (Fr(0))
 
-#define F_BYTE_SIZE 16
-#define G_BYTE_SIZE 32
+#define F_BYTE_SIZE 32  // BN254 Fr (~254-bit modulus, 32-byte canonical encoding)
+#define G_BYTE_SIZE 32  // BN254 G1 compressed (32 bytes: x-coord + parity bit)
+
+// Global proof-size accumulator (bytes). Defined in utils.cpp.
+// Replaces prover::proof_size — every component (commitments, bullet-reduce
+// transcripts, sumcheck rounds, openings) increments this counter.
+extern u64 g_proof_size;
+void reset_proof_size();
 
 template <typename T>
 string to_string_wp(const T a_value, const int n = 4) {

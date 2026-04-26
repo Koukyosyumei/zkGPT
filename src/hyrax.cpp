@@ -1,4 +1,5 @@
 #include "hyrax.hpp"
+#include "global_var.hpp"
 #include "timer.hpp"
 #include <cmath>
 #include <thread>
@@ -293,10 +294,16 @@ Pack bullet_reduce(G1 gamma, Fr*a,G1*g,int n,G1& G,Fr* x,Fr y,bool need_free) //
     timer vtimer;
     if(n==1)
     {
+        // Bulletproofs base case: prover sends final scalars (a, x).
+        // y = a*x and gamma are derivable by the verifier.
+        g_proof_size += 2 * F_BYTE_SIZE;
         Pack p(gamma,a[0],g[0],x[0],y);
         return p;
     }
-    
+
+    // Bulletproofs round: prover sends cross-term commitments (gamma_minus1, gamma_1).
+    g_proof_size += 2 * G_BYTE_SIZE;
+
     //step2  prover fold
     G1 gamma_minus1,gamma_1;
     Fr x1a2=0,x2a1=0;
@@ -391,6 +398,8 @@ G1* prover_commit(ll* w, G1* g, int l,int thread_n) //compute Tk, int version wi
 {
     int halfl=l/2;
     int rownum=(1<<halfl),colnum=(1<<(l-halfl));
+    // Hyrax commitment: prover sends the row-wise Pedersen vector Tk (rownum G1 points).
+    g_proof_size += (u64)rownum * G_BYTE_SIZE;
     G1 *Tk=new G1[rownum];
     ll* row=new ll[1<<l];
     G1** W=new G1*[thread_n];

@@ -196,7 +196,7 @@ void verifier::prove(int commit_thread)
     cout<<"Matrix multiplication Prover time: "<<matrix_time<<"s"<<endl;
     cout<<"Total Prover time: "<<prover_time + range_prover_time<<"s"<<endl;
     cout<<"Verifier time: "<<verifier_time<<"s"<<endl;
-    cout<<"Proof size: "<<(double)(p->proof_size)/1024.0<<"KB"<<endl;
+    cout<<"Proof size: "<<(double)g_proof_size/1024.0<<"KB"<<endl;
 }
 
 Fr * init_book_keeping(int m,int n,vector<Fr> &vec,int offset, vector<Fr> & ra)

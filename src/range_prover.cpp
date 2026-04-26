@@ -22,6 +22,8 @@ range_prover::SC_Return range_prover::sumcheck_deg1(int l, Fr* f, Fr S) // sum_i
 {
     // P send V sum S
     Fr *ran=new Fr[l];
+    // Initial claim S is part of the proof.
+    g_proof_size += F_BYTE_SIZE;
     for(int i=l;i>=1;i--) // round i
     {
         Fr sum0=0,sum1=0;
@@ -36,6 +38,8 @@ range_prover::SC_Return range_prover::sumcheck_deg1(int l, Fr* f, Fr S) // sum_i
         }
         // assert(sum0+sum1==S);
         //send poly: sum0,sum1
+        // Degree-1 sumcheck round: 2 Fr per round.
+        g_proof_size += 2 * F_BYTE_SIZE;
         Fr new_chlg;
         new_chlg.setByCSPRNG();
         ran[l-i]=new_chlg;
@@ -50,6 +54,8 @@ range_prover::SC_Return range_prover::sumcheck_deg1(int l, Fr* f, Fr S) // sum_i
     SC_Return s;
     s.random=ran;
     s.claim_f=f[0];
+    // Final claim sent at end of sumcheck.
+    g_proof_size += F_BYTE_SIZE;
     return s;
 }
 
@@ -58,6 +64,8 @@ range_prover::SC_Return range_prover::sumcheck_deg3(int l, Fr* r, Fr* f, Fr* g, 
     Fr* lag=range_proof_get_eq(r,l);
     // P send V sum S
     Fr *ran=new Fr[l];
+    // Initial claim S is part of the proof.
+    g_proof_size += F_BYTE_SIZE;
     Fr *S0=new Fr[1<<l],*S1=new Fr[1<<l],*S2=new Fr[1<<l],*S3=new Fr[1<<l];
     for(int i=l;i>=1;i--) // round i
     {
@@ -112,6 +120,8 @@ range_prover::SC_Return range_prover::sumcheck_deg3(int l, Fr* r, Fr* f, Fr* g, 
         }
         assert(sum0+sum1==S);
         //send poly: sum0,sum1,sum2,sum3
+        // Degree-3 sumcheck round: 4 Fr per round.
+        g_proof_size += 4 * F_BYTE_SIZE;
         Fr new_chlg;
         new_chlg.setByCSPRNG();
         ran[l-i]=new_chlg;
@@ -136,6 +146,8 @@ range_prover::SC_Return range_prover::sumcheck_deg3(int l, Fr* r, Fr* f, Fr* g, 
     s.random=ran;
     s.claim_f=f[0];
     s.claim_g=g[0];
+    // Final claims sent at end of sumcheck.
+    g_proof_size += 2 * F_BYTE_SIZE;
     return s;
 }
 
@@ -233,10 +245,12 @@ void range_prover::logup(ll * f,ll *t,int m,int n,int thread)
     G1* g_comm=range_proof_prover_commit_fr(f,diff,n,g,lg2(m),thread);
 
     G1* h_comm=range_proof_prover_commit_fr_general(H,g,lg2(n),thread);
-    
+
     Fr sum=0;
     for(int i=0;i<m;i++)
         sum+=G[i];
+    // LogUp scalars sent in the proof: claimed sum + c_eva.
+    g_proof_size += 2 * F_BYTE_SIZE;
     Fr* rp1=new Fr[lg2(n)];
     for(int i=0;i<lg2(n);i++)
         rp1[i].setByCSPRNG(); //verifier challenge

@@ -15,9 +15,9 @@ F prover::getCirValue(u8 layer_id, const vector<u32> &ori, u32 u) {
     return !layer_id ? val[0][ori[u]] : val[layer_id][u];
 }
 
-void prover::init() 
+void prover::init()
 {
-    proof_size = 0;
+    reset_proof_size();
     r_u.resize(C.size + 1);
     r_v.resize(C.size + 1);
     int SIZE = 1;
@@ -430,7 +430,8 @@ quadratic_poly prover::sumcheckUpdate(const F &previous_random, vector<F> &r_arr
     ret = ret + quadratic_poly(F_ZERO, -add_term, add_term);
 
     prove_timer.stop();
-    proof_size += F_BYTE_SIZE * 3;
+    // Sumcheck round: prover sends a degree-2 univariate poly (3 Fr coefficients).
+    g_proof_size += F_BYTE_SIZE * 3;
     return ret;
 }
 
@@ -567,7 +568,7 @@ F prover::Vres(const vector<F>::const_iterator &r, u32 output_size, u8 r_size,in
     F res = output[0];
 
     prove_timer.stop();
-    proof_size += F_BYTE_SIZE;
+    g_proof_size += F_BYTE_SIZE;
     return res;
 }
 
@@ -582,7 +583,7 @@ void prover::sumcheckFinalize1(const F &previous_random, F &claim_0, F &claim_1)
     mult_array[1].clear();
     V_mult[0].clear();
     V_mult[1].clear();
-    proof_size += F_BYTE_SIZE * 2;
+    g_proof_size += F_BYTE_SIZE * 2;
 }
 
 void prover::sumcheckFinalize2(const F &previous_random, F &claim_0, F &claim_1) {
@@ -596,16 +597,16 @@ void prover::sumcheckFinalize2(const F &previous_random, F &claim_0, F &claim_1)
     mult_array[1].clear();
     V_mult[0].clear();
     V_mult[1].clear();
-    proof_size += F_BYTE_SIZE * 2;
+    g_proof_size += F_BYTE_SIZE * 2;
 }
 
-void prover::sumcheck_lasso_Finalize(const F &previous_random, F &claim_1) 
+void prover::sumcheck_lasso_Finalize(const F &previous_random, F &claim_1)
 {
     prove_timer.start();
     r_u[sumcheck_id].at(round - 1) = previous_random;
     claim_1 = total[1] ? V_mult[1][0].eval(previous_random) : V_mult[1][0].b;
     prove_timer.stop();
-    proof_size += F_BYTE_SIZE;
+    g_proof_size += F_BYTE_SIZE;
 }
 
 

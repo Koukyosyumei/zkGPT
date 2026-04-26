@@ -6,11 +6,15 @@
 #include <iostream>
 
 #include "utils.hpp"
+#include "global_var.hpp"
 
 using std::cerr;
 using std::endl;
 using std::string;
 using std::cin;
+
+u64 g_proof_size = 0;
+void reset_proof_size() { g_proof_size = 0; }
 
 int ceilPow2BitLengthSigned(double n) {
     return (i8) ceil(log2(n));

@@ -59,14 +59,13 @@ public:
     timer prove_timer;
     vector<double> throw_time[500];
     double proveTime() const{ return 0;}// { return prove_timer.elapse_sec(); }
-    double proofSize() const { return 0;}// (double) proof_size / 1024.0; }
+    double proofSize() const { return (double) g_proof_size / 1024.0; }
     double polyProverTime() const { return 0;}//poly_p -> getPT(); }
     double polyProofSize() const { return 0;}//{ return poly_p -> getPS(); }
-    
+
     layeredCircuit C;
     vector<vector<F>> val;        // the output of each gate
     F getCirValue(u8 layer_id, const vector<u32> &ori, u32 u);
-    u64 proof_size;
     vector<G> gens;
     Commit_return cc;
     

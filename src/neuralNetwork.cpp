@@ -311,7 +311,9 @@ void neuralNetwork::create(prover &pr, bool merge)
     T.start();
     pr.commitInput(pr.gens, pic_parallel);  //commit weight
     T.stop();
-    pr.proof_size+= 1<<(pr.cc.l/2);
+    // Hyrax input/weight commitment is the Tk array of size 2^(l/2) G1 points,
+    // but prover_commit() already accounts for it. (Old code added 1<<(l/2) raw
+    // bytes here, undercounting by ~32x.)
     cout<<"Model weight commit time: "<<T.elapse_sec()<<"s"<<endl;
     cout<<"Start initiating circuit"<<endl;
     for (int i = 0; i < (int)full_conn.size(); ++i)
