@@ -393,6 +393,8 @@ void sc_last_worker_first(Fr& A, Fr&B,Fr&C,Fr*& read_1,Fr*& read_2, int*& L,int*
 
 pair<Fr,Fr> sum_check_product(Fr* f,Fr* g,int m,Fr* r,Fr ans)
 {
+    // Prover sends one degree-2 univariate polynomial per product-sumcheck round.
+    g_proof_size += 3 * F_BYTE_SIZE;
     Fr A=0,B=0,C=0;
     Fr *zf=new Fr[1<<m], *zg=new Fr[1<<m];
     for(int k=0;k<(1<<m);k++)
@@ -434,6 +436,8 @@ pair<Fr,Fr> sum_check_product(Fr* f,Fr* g,int m,Fr* r,Fr ans)
     Fr new_ans=send_r*send_r*a+send_r*b+c; //g(r)
     if(m==0)
     {
+        // Final product-sumcheck oracle values f(r), g(r).
+        g_proof_size += 2 * F_BYTE_SIZE;
         if(!(new_ans-new_f[0]*new_g[0]).isZero())
             cerr<<"[warn] final inner product mismatch"<<endl;
         return make_pair(new_f[0],new_g[0]);
@@ -801,6 +805,8 @@ bool verifier::verifyLasso()
         Fr aa=(C+A)/2-B,bb=2*B-C/2-3*A/2,cc=A;
         Fr g1=aa+bb+cc,g0=cc;
         if(i!=n) {
+            // Prover sends one degree-2 univariate polynomial per Lasso sumcheck round.
+            g_proof_size += 3 * F_BYTE_SIZE;
             if(!(previousSum==g0+g1))
                 cerr<<"[warn] sumcheck outer loop mismatch at i="<<i<<endl;
         }
@@ -815,6 +821,8 @@ bool verifier::verifyLasso()
     F gr = F_ZERO;
 
     eval_in=pa2[n][0];
+    // Final claimed committed-input evaluation used by Lasso and the Hyrax opening.
+    g_proof_size += F_BYTE_SIZE;
     
     beta_g.resize(1ULL << cur.bit_length);
     ptimer.start();
