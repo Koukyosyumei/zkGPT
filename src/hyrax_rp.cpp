@@ -257,15 +257,17 @@ G1* range_proof_prover_commit(ll* w, G1* g, int l,int thread_n) //compute Tk, in
     for (u64 i = 0; i < rownum; ++i)  //work for rownum 
         workerq.Push(i);
 
+    vector<thread> ths;
+    ths.reserve(thread_n);
     for(int i=0;i<thread_n;i++)
     {
-        thread t(ll_commit_worker,std::ref(Tk),std::ref(g),std::ref(w),rownum,colnum,std::ref(W[i])); 
-        t.detach();
+        ths.emplace_back(ll_commit_worker,std::ref(Tk),std::ref(g),std::ref(w),rownum,colnum,std::ref(W[i]));
     }
     while(!workerq.Empty())
         this_thread::sleep_for (std::chrono::microseconds(10));
     while(endq.Size()!=rownum)
         this_thread::sleep_for (std::chrono::microseconds(10));
+    for(auto &t : ths) t.join();
     endq.Clear();
     assert(endq.Size()==0);
    // t.stop("commit time(PPG) ");
@@ -305,15 +307,17 @@ G1* range_proof_prover_commit_fr(ll* w, Fr* f,int m,G1* g, int l,int thread_n)
     for (u64 i = 0; i < rownum; ++i)  //work for rownum 
         workerq.Push(i);
 
+    vector<thread> ths;
+    ths.reserve(thread_n);
     for(int i=0;i<thread_n;i++)
     {
-        thread t(fr_commit_worker,std::ref(Tk),std::ref(g),std::ref(w),std::ref(f),m,rownum,colnum); 
-        t.detach();
+        ths.emplace_back(fr_commit_worker,std::ref(Tk),std::ref(g),std::ref(w),std::ref(f),m,rownum,colnum);
     }
     while(!workerq.Empty())
         this_thread::sleep_for (std::chrono::microseconds(10));
     while(endq.Size()!=rownum)
         this_thread::sleep_for (std::chrono::microseconds(10));
+    for(auto &t : ths) t.join();
     endq.Clear();
     assert(endq.Size()==0);
    // t.stop("commit time Fr ");
@@ -349,15 +353,17 @@ G1* range_proof_prover_commit_fr_general(Fr* w, G1* g, int l,int thread_n)
     for (u64 i = 0; i < rownum; ++i)  //work for rownum 
         workerq.Push(i);
 
+    vector<thread> ths;
+    ths.reserve(thread_n);
     for(int i=0;i<thread_n;i++)
     {
-        thread t(fr_commit_worker_general,std::ref(Tk),std::ref(g),std::ref(w),rownum,colnum); 
-        t.detach();
+        ths.emplace_back(fr_commit_worker_general,std::ref(Tk),std::ref(g),std::ref(w),rownum,colnum);
     }
     while(!workerq.Empty())
         this_thread::sleep_for (std::chrono::microseconds(10));
     while(endq.Size()!=rownum)
         this_thread::sleep_for (std::chrono::microseconds(10));
+    for(auto &t : ths) t.join();
     endq.Clear();
     assert(endq.Size()==0);
  //   t.stop("commit time Fr ");

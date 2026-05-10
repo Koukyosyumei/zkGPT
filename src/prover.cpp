@@ -159,24 +159,26 @@ void prover::sumcheckInitPhase1(const F &relu_rou_0)
     {
         const int thd=32;
         int *L=new int [cur.uni_interval.size()],*R=new int [cur.uni_interval.size()];
-        for (u64 j = 0; j <cur.uni_interval.size(); ++j) 
+        for (u64 j = 0; j <cur.uni_interval.size(); ++j)
         {
                 workerq.Push(j);
                 L[j]=cur.uni_interval[j].first;
                 R[j]=cur.uni_interval[j].second;
         }
+        vector<thread> ths;
+        ths.reserve(thd);
         for(int i=0;i<thd;i++)
         {
-            thread t(sc_phase1_uni_worker, std::ref(cur.uni_gates),std::ref(mult_array),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R)); 
-            t.detach();
+            ths.emplace_back(sc_phase1_uni_worker, std::ref(cur.uni_gates),std::ref(mult_array),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R));
         }
         while(!workerq.Empty())
             this_thread::sleep_for (std::chrono::microseconds(1));
         while(endq.Size()!=cur.uni_interval.size())
             this_thread::sleep_for (std::chrono::microseconds(1));
+        for(auto &t : ths) t.join();
         endq.Clear();
     }
-    else for (auto &gate: cur.uni_gates) 
+    else for (auto &gate: cur.uni_gates)
         {
             bool idx = gate.lu != 0;
             mult_array[idx][gate.u] = mult_array[idx][gate.u] + beta_g[gate.g] * gate.sc;
@@ -185,21 +187,23 @@ void prover::sumcheckInitPhase1(const F &relu_rou_0)
     {
         const int thd=32;
         int *L=new int [cur.bin_interval.size()],*R=new int [cur.bin_interval.size()];
-        for (u64 j = 0; j <cur.bin_interval.size(); ++j) 
+        for (u64 j = 0; j <cur.bin_interval.size(); ++j)
         {
                 workerq.Push(j);
                 L[j]=cur.bin_interval[j].first;
                 R[j]=cur.bin_interval[j].second;
         }
+        vector<thread> ths;
+        ths.reserve(thd);
         for(int i=0;i<thd;i++)
         {
-            thread t(sc_phase1_bin_worker, std::ref(cur),std::ref(cur.bin_gates),std::ref(mult_array),std::ref(V_u0),std::ref(V_u1),std::ref(val),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R),sumcheck_id); 
-            t.detach();
+            ths.emplace_back(sc_phase1_bin_worker, std::ref(cur),std::ref(cur.bin_gates),std::ref(mult_array),std::ref(V_u0),std::ref(V_u1),std::ref(val),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R),sumcheck_id);
         }
         while(!workerq.Empty())
             this_thread::sleep_for (std::chrono::microseconds(1));
         while(endq.Size()!=cur.bin_interval.size())
             this_thread::sleep_for (std::chrono::microseconds(1));
+        for(auto &t : ths) t.join();
         endq.Clear();
     }
     else  for (auto &gate: cur.bin_gates) 
@@ -246,12 +250,12 @@ void sc_phase2_bin_worker( vector<binGate> &beg, std::vector<linear_poly> (&mult
             return;
         int l=L[idx],r=R[idx];
 
-        for (size_t i = l; i <r ; ++i) 
+        for (size_t i = l; i <r ; ++i)
         {
             auto &gate = beg[i];
-            bool idx = gate.getLayerIdV(sumcheck_id);
+            bool b = gate.getLayerIdV(sumcheck_id);
             auto V_u = !gate.getLayerIdU(sumcheck_id) ? V_u0 : V_u1;
-            mult_array[idx][gate.v] =mult_array[idx][gate.v]+beta_g[gate.g] * beta_u[gate.u] * V_u * gate.sc;
+            mult_array[b][gate.v] =mult_array[b][gate.v]+beta_g[gate.g] * beta_u[gate.u] * V_u * gate.sc;
         }
         endq.Push(idx);
     }
@@ -307,16 +311,18 @@ void prover::sumcheckInitPhase2()
                 L[j]=cur.uni_interval[j].first;
                 R[j]=cur.uni_interval[j].second;
         }
+            vector<thread> ths;
+            ths.reserve(thd);
             for(int i=0;i<thd;i++)
             {
-                sum[i].clear(); 
-                thread t(sc_phase2_uni_worker, std::ref(cur.uni_gates),std::ref(sum[i]),std::ref(V_u0),std::ref(V_u1),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R)); 
-                t.detach();
+                sum[i].clear();
+                ths.emplace_back(sc_phase2_uni_worker, std::ref(cur.uni_gates),std::ref(sum[i]),std::ref(V_u0),std::ref(V_u1),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R));
             }
             while(!workerq.Empty())
                 this_thread::sleep_for (std::chrono::microseconds(1));
             while(endq.Size()!=cur.uni_interval.size())
                 this_thread::sleep_for (std::chrono::microseconds(1));
+            for(auto &t : ths) t.join();
             endq.Clear();
             for(int i=0;i<thd;i++)
                 add_term+=sum[i];
@@ -336,15 +342,17 @@ void prover::sumcheckInitPhase2()
                 L[j]=cur.bin_interval[j].first;
                 R[j]=cur.bin_interval[j].second;
         }
+            vector<thread> ths;
+            ths.reserve(thd);
             for(int i=0;i<thd;i++)
             {
-                thread t(sc_phase2_bin_worker, std::ref(cur.bin_gates),std::ref(mult_array),std::ref(V_u0),std::ref(V_u1),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R),sumcheck_id); 
-                t.detach();
+                ths.emplace_back(sc_phase2_bin_worker, std::ref(cur.bin_gates),std::ref(mult_array),std::ref(V_u0),std::ref(V_u1),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R),sumcheck_id);
             }
             while(!workerq.Empty())
                 this_thread::sleep_for (std::chrono::microseconds(1));
             while(endq.Size()!=cur.bin_interval.size())
                 this_thread::sleep_for (std::chrono::microseconds(1));
+            for(auto &t : ths) t.join();
             endq.Clear();
     }
     else for (auto &gate: cur.bin_gates) 
@@ -505,13 +513,15 @@ quadratic_poly prover::sumcheckUpdateEach(const F &previous_random, bool idx)
             R[j]=(total_work>>k)*(1+j);
         }
         quadratic_poly qp[thd];
+        vector<thread> ths;
+        ths.reserve(thd);
         for(int j=0;j<thd;j++)
         {
-            thread t(sumcheckUpdate_worker,std::ref(qp[j]),std::ref(tmp_v),std::ref(tmp_mult),std::ref(tmp_v_2),std::ref(tmp_mult_2),std::ref(L),std::ref(R),previous_random,total_size[idx]); 
-            t.detach();
+            ths.emplace_back(sumcheckUpdate_worker,std::ref(qp[j]),std::ref(tmp_v),std::ref(tmp_mult),std::ref(tmp_v_2),std::ref(tmp_mult_2),std::ref(L),std::ref(R),previous_random,total_size[idx]);
         }
         while(endq.Size()!=(1<<k))
             this_thread::sleep_for(std::chrono::microseconds(1));
+        for(auto &t : ths) t.join();
         endq.Clear();
         for(int j=0;j<thd;j++)
             ret=ret+qp[j];

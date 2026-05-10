@@ -116,15 +116,17 @@ void initBetaTable(vector<F> &beta_g, u8 gLength, const vector<F>::const_iterato
                 L[j]=(total_work>>k)*j;
                 R[j]=(total_work>>k)*(1+j);
             }
+            vector<thread> ths;
+            ths.reserve(thd);
             for(int j=0;j<thd;j++)
             {
-                thread t(initBetaTable_worker,std::ref(beta_g),std::ref(beta_f),std::ref(beta_s),std::ref(L),std::ref(R),first_half,mask_fhalf); 
-                t.detach();
+                ths.emplace_back(initBetaTable_worker,std::ref(beta_g),std::ref(beta_f),std::ref(beta_s),std::ref(L),std::ref(R),first_half,mask_fhalf);
             }
             while(!workerq.Empty())
                 this_thread::sleep_for (std::chrono::microseconds(10));
             while(endq.Size()!=(1<<k))
                 this_thread::sleep_for (std::chrono::microseconds(10));
+            for(auto &t : ths) t.join();
             endq.Clear();
         }
     } else for (u32 i = 0; i < (1ULL << gLength); ++i)
@@ -142,21 +144,23 @@ void initBetaTable(vector<F> &beta_g, u8 gLength, const vector<F>::const_iterato
             const int k=10;
             int total_work=(1ULL << gLength);
             int *L=new int [(1<<k)],*R=new int [(1<<k)];
-            for (u64 j = 0; j < (1<<k); ++j) 
+            for (u64 j = 0; j < (1<<k); ++j)
             {
                 workerq.Push(j);
                 L[j]=(total_work>>k)*j;
                 R[j]=(total_work>>k)*(1+j);
             }
+            vector<thread> ths;
+            ths.reserve(thd);
             for(int j=0;j<thd;j++)
             {
-                thread t(initBetaTable_worker2,std::ref(beta_g),std::ref(beta_f),std::ref(beta_s),std::ref(L),std::ref(R),first_half,mask_fhalf); 
-                t.detach();
+                ths.emplace_back(initBetaTable_worker2,std::ref(beta_g),std::ref(beta_f),std::ref(beta_s),std::ref(L),std::ref(R),first_half,mask_fhalf);
             }
             while(!workerq.Empty())
                 this_thread::sleep_for (std::chrono::microseconds(10));
             while(endq.Size()!=(1<<k))
                 this_thread::sleep_for (std::chrono::microseconds(10));
+            for(auto &t : ths) t.join();
             endq.Clear();
         }
 }
@@ -189,18 +193,20 @@ void initBetaTable(vector<F> &beta_g, u8 gLength, const vector<F>::const_iterato
                 L[j]=(total_work>>k)*j;
                 R[j]=(total_work>>k)*(1+j);
             }
+            vector<thread> ths;
+            ths.reserve(thd);
             for(int j=0;j<thd;j++)
             {
-                thread t(initBetaTable_worker,std::ref(beta_g),std::ref(beta_f),std::ref(beta_s),std::ref(L),std::ref(R),first_half,mask_fhalf); 
-                t.detach();
+                ths.emplace_back(initBetaTable_worker,std::ref(beta_g),std::ref(beta_f),std::ref(beta_s),std::ref(L),std::ref(R),first_half,mask_fhalf);
             }
             while(!workerq.Empty())
                 this_thread::sleep_for (std::chrono::microseconds(10));
             while(endq.Size()!=(1<<k))
                 this_thread::sleep_for (std::chrono::microseconds(10));
+            for(auto &t : ths) t.join();
             endq.Clear();
         }
-    } 
+    }
     else for (u32 i = 0; i < (1ULL << gLength); ++i)
         beta_g[i].clear();
 }

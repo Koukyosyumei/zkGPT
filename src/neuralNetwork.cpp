@@ -1429,7 +1429,7 @@ void neuralNetwork::readFconWeight(i64 first_fc_id,int real_r,int real_c,int id)
 {
     double num, mx = -10000, mn = 10000;
     auto val_0 = val[0].begin() + first_fc_id;
-    mat_values[id]=new int[4096*1024];
+    mat_values[id]=new int[(size_t)channel_out * channel_in];
     for (i64 co = 0; co < channel_out; ++co)
         for (i64 ci = 0; ci < channel_in; ++ci) 
         {

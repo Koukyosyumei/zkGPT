@@ -117,15 +117,17 @@ void verifier::predicatePhase1(u8 layer_id)
                 L[j]=cur_layer.uni_interval[j].first;
                 R[j]=cur_layer.uni_interval[j].second;
         }
+            vector<thread> ths;
+            ths.reserve(thd);
             for(int i=0;i<thd;i++)
-            { 
-                thread t(pred1_worker, std::cref(cur_layer.uni_gates),std::ref(univ[i]),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R)); 
-                t.detach();
+            {
+                ths.emplace_back(pred1_worker, std::cref(cur_layer.uni_gates),std::ref(univ[i]),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R));
             }
             while(!workerq.Empty())
                 this_thread::sleep_for (std::chrono::microseconds(1));
             while(endq.Size()!=C.circuit[layer_id].uni_interval.size())
                 this_thread::sleep_for (std::chrono::microseconds(1));
+            for(auto &t : ths) t.join();
             endq.Clear();
             for(int i=0;i<thd;i++)
             {
@@ -164,15 +166,17 @@ void verifier::predicatePhase2(u8 layer_id)
                 L[j]=cur_layer.bin_interval[j].first;
                 R[j]=cur_layer.bin_interval[j].second;
         }
+            vector<thread> ths;
+            ths.reserve(thd);
             for(int i=0;i<thd;i++)
-            { 
-                thread t(pred2_worker, std::cref(cur_layer.bin_gates),std::ref(binv[i]),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R)); 
-                t.detach();
+            {
+                ths.emplace_back(pred2_worker, std::cref(cur_layer.bin_gates),std::ref(binv[i]),std::ref(beta_g),std::ref(beta_u),std::ref(L),std::ref(R));
             }
             while(!workerq.Empty())
                 this_thread::sleep_for (std::chrono::microseconds(1));
             while(endq.Size()!=C.circuit[layer_id].bin_interval.size())
                 this_thread::sleep_for (std::chrono::microseconds(1));
+            for(auto &t : ths) t.join();
             endq.Clear();
             for(int i=0;i<thd;i++)
             {
@@ -717,15 +721,17 @@ bool verifier::verifyLasso()
             memset(Aa,0,sizeof(Aa));
             memset(Bb,0,sizeof(Bb));
             memset(Cc,0,sizeof(Cc));
+            vector<thread> ths;
+            ths.reserve(thread_n);
             for(int j=0;j<thread_n;j++)
             {
-                thread t(sc_last_worker_first,std::ref(Aa[j]),std::ref(Bb[j]),std::ref(Cc[j]),std::ref(read_1),std::ref(read_2),std::ref(L),std::ref(R)); 
-                t.detach();
+                ths.emplace_back(sc_last_worker_first,std::ref(Aa[j]),std::ref(Bb[j]),std::ref(Cc[j]),std::ref(read_1),std::ref(read_2),std::ref(L),std::ref(R));
             }
             while(!workerq.Empty())
                 this_thread::sleep_for (std::chrono::microseconds(1));
             while(endq.Size()!=task_cnt)
                 this_thread::sleep_for (std::chrono::microseconds(1));
+            for(auto &t : ths) t.join();
             endq.Clear();
             //Fr ax=0,bx=0,cx=0;
             for(int j=0;j<thread_n;j++)
@@ -759,15 +765,17 @@ bool verifier::verifyLasso()
             memset(Aa,0,sizeof(Aa));
             memset(Bb,0,sizeof(Bb));
             memset(Cc,0,sizeof(Cc));
+            vector<thread> ths;
+            ths.reserve(thread_n);
             for(int j=0;j<thread_n;j++)
             {
-                thread t(sc_last_worker,std::ref(Aa[j]),std::ref(Bb[j]),std::ref(Cc[j]),std::ref(read_1),std::ref(read_2),std::ref(write_1),std::ref(write_2),std::ref(L),std::ref(R),r_u[0][i-1]); 
-                t.detach();
+                ths.emplace_back(sc_last_worker,std::ref(Aa[j]),std::ref(Bb[j]),std::ref(Cc[j]),std::ref(read_1),std::ref(read_2),std::ref(write_1),std::ref(write_2),std::ref(L),std::ref(R),r_u[0][i-1]);
             }
             while(!workerq.Empty())
                 this_thread::sleep_for (std::chrono::microseconds(10));
             while(endq.Size()!=taskcnt)
                 this_thread::sleep_for (std::chrono::microseconds(10));
+            for(auto &t : ths) t.join();
             endq.Clear();
             tt.stop();
             for(int j=0;j<thread_n;j++)

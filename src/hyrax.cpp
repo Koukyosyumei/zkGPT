@@ -407,17 +407,19 @@ G1* prover_commit(ll* w, G1* g, int l,int thread_n) //compute Tk, int version wi
         W[i]=new G1[COMM_OPT_MAX*block_num];
     for(int i=0;i<thread_n;i++)
         memset(W[i],0,sizeof(G1)*COMM_OPT_MAX*block_num);
-    for (u64 i = 0; i < rownum; ++i)  //work for rownum 
+    for (u64 i = 0; i < rownum; ++i)  //work for rownum
         workerq.Push(i);
+    vector<thread> ths;
+    ths.reserve(thread_n);
     for(int i=0;i<thread_n;i++)
     {
-        thread t(ll_commit_worker,std::ref(Tk),std::ref(g),std::ref(w),colnum,std::ref(W[i])); 
-        t.detach();
+        ths.emplace_back(ll_commit_worker,std::ref(Tk),std::ref(g),std::ref(w),colnum,std::ref(W[i]));
     }
     while(!workerq.Empty())
         this_thread::sleep_for (std::chrono::microseconds(10));
     while(endq.Size()!=rownum)
         this_thread::sleep_for (std::chrono::microseconds(10));
+    for(auto &t : ths) t.join();
     endq.Clear();
     assert(endq.Size()==0);
     for(int i=0;i<thread_n;i++)
